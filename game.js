@@ -262,7 +262,7 @@ class Game {
             if (!character.isMovable) return;
             
             const currentCell = this.grid[character.position];
-            if (currentCell.movable !== character) return; // 確保角色仍在原位置
+            if (currentCell.movable !== character) return;
             
             // 檢查是否可以移動
             if (currentTime - character.lastMove < 1000 / character.speed) return;
@@ -270,12 +270,6 @@ class Game {
             const nextPosition = character.team === 'BLUE' ? 
                 character.position + 1 : 
                 character.position - 1;
-            
-            // 檢查是否到達勝利條件
-            if (this.checkVictoryCondition(character, nextPosition)) {
-                this.endGame(character.team);
-                return;
-            }
 
             // 檢查下一個位置是否可以移動
             if (this.canMoveTo(character, nextPosition)) {
@@ -286,8 +280,27 @@ class Game {
                 this.grid[nextPosition].movable = character;
                 character.position = nextPosition;
                 character.lastMove = currentTime;
+
+                // 移動後檢查勝利條件
+                if (this.checkVictoryCondition(character, nextPosition)) {
+                    return;
+                }
             }
         });
+    }
+
+    checkVictoryCondition(character, position) {
+        // 藍方需要到達最右邊（第15格）才算勝利
+        if (character.team === 'BLUE' && position === GRID_SIZE - 1) {
+            this.endGame('BLUE');
+            return true;
+        }
+        // 紅方需要到達最左邊（第0格）才算勝利
+        if (character.team === 'RED' && position === 0) {
+            this.endGame('RED');
+            return true;
+        }
+        return false;
     }
 
     canMoveTo(character, position) {
@@ -298,21 +311,7 @@ class Game {
         const targetCell = this.grid[position];
         if (targetCell.fixed || targetCell.movable) return false;
 
-        return true; // 允許在整個戰場上移動
-    }
-
-    checkVictoryCondition(character, nextPosition) {
-        // 藍方需要到達最右邊（第15格）才算勝利
-        if (character.team === 'BLUE' && nextPosition === GRID_SIZE - 1) {
-            this.endGame('BLUE');
-            return true;
-        }
-        // 紅方需要到達最左邊（第0格）才算勝利
-        if (character.team === 'RED' && nextPosition === 0) {
-            this.endGame('RED');
-            return true;
-        }
-        return false;
+        return true;
     }
 
     endGame(winner) {
