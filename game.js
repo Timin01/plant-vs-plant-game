@@ -231,32 +231,13 @@ class Game {
         document.getElementById('redMoneyText').textContent = this.redMoney;
     }
 
-    update() {
-        const currentTime = Date.now();
-        const deltaTime = (currentTime - this.lastUpdate) / 1000; // 轉換為秒
+    update(currentTime) {
+        if (!this.lastUpdate) {
+            this.lastUpdate = currentTime;
+        }
+        const deltaTime = (currentTime - this.lastUpdate) / 1000;
         this.lastUpdate = currentTime;
 
-        // 生成金錢
-        if (currentTime - this.lastMoneyGeneration >= 2000) {
-            this.characters.forEach(character => {
-                if (character.type === CHARACTER_TYPES.SUNFLOWER) {
-                    if (character.team === 'BLUE') {
-                        this.blueMoney += character.moneyGeneration;
-                    } else {
-                        this.redMoney += character.moneyGeneration;
-                    }
-                }
-            });
-            this.lastMoneyGeneration = currentTime;
-            this.updateMoneyDisplay();
-        }
-        
-        // 處理戰鬥
-        this.handleCombat(currentTime);
-        
-        // 更新子彈
-        this.updateBullets(deltaTime);
-        
         // 處理移動角色的移動
         this.characters.forEach(character => {
             if (!character.isMovable) return;
@@ -287,6 +268,15 @@ class Game {
                 }
             }
         });
+
+        // 更新其他遊戲邏輯
+        this.handleCombat(currentTime);
+        this.updateBullets(deltaTime);
+        this.generateMoney(currentTime);
+        this.draw();
+
+        // 繼續遊戲循環
+        this.animationFrame = requestAnimationFrame(this.update.bind(this));
     }
 
     checkVictoryCondition(character, position) {
@@ -422,11 +412,11 @@ class Game {
             attacker.position + 1 : 
             attacker.position - 1;
 
-        if (targetPosition < 0 || targetPosition >= GRID_SIZE) return null;
-
+        // 移除邊界檢查，讓角色可以攻擊到最邊邊的格子
         const targetCell = this.grid[targetPosition];
-        const target = targetCell.fixed || targetCell.movable;
+        if (!targetCell) return null;  // 只在格子不存在時返回 null
 
+        const target = targetCell.fixed || targetCell.movable;
         if (target && target.team !== attacker.team) {
             return target;
         }
@@ -439,11 +429,11 @@ class Game {
 
         for (let i = 1; i <= attacker.range; i++) {
             position += direction;
-            if (position < 0 || position >= GRID_SIZE) break;
-
+            // 移除邊界檢查，讓遠程單位可以攻擊到最邊邊的格子
             const cell = this.grid[position];
-            const target = cell.fixed || cell.movable;
+            if (!cell) break;  // 只在格子不存在時中斷
 
+            const target = cell.fixed || cell.movable;
             if (target && target.team !== attacker.team) {
                 return target;
             }
