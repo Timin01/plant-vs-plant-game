@@ -92,18 +92,17 @@ class Game {
         this.blueMoney = 10;
         this.redMoney = 10;
         
-        this.setupEventListeners();
-        this.gameLoop();
-        
-        // 添加新的屬性
+        this.characters = [];
+        this.bullets = [];
         this.selectedPosition = {
             BLUE: null,
             RED: null
         };
-        this.characters = [];
         this.lastMoneyGeneration = Date.now();
         this.lastUpdate = Date.now();
-        this.bullets = []; // 新增子彈陣列
+        
+        this.setupEventListeners();
+        this.gameLoop();
     }
 
     setupEventListeners() {

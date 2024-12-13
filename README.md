@@ -2,6 +2,9 @@
 
 這是一個基於HTML5 Canvas的雙人對戰遊戲。
 
+## 遊玩連結
+[點此開始遊戲](https://Timin01.github.io/plant-vs-plant-game/)
+
 ## 遊戲說明
 
 ### 藍方控制鍵
