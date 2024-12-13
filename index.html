@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <title>植物大戰殭屍風格雙人對戰遊戲</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
         canvas {
             border: 2px solid black;
             display: block;
@@ -14,9 +20,49 @@
             font-size: 24px;
             margin-bottom: 20px;
         }
+        .instructions {
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .team-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
+    <div class="instructions">
+        <h2>遊戲說明</h2>
+        <div class="team-controls">
+            <div class="blue-team">
+                <h3>藍方控制鍵</h3>
+                <p>選擇位置：A, S, D, F, G（由左至右）</p>
+                <p>角色選擇：</p>
+                <ul>
+                    <li>Q：太陽花 (2金幣)</li>
+                    <li>W：土牆 (5金幣)</li>
+                    <li>E：火砲 (5金幣)</li>
+                    <li>R：貓貓 (2金幣)</li>
+                    <li>T：持劍貓貓 (3金幣)</li>
+                </ul>
+            </div>
+            <div class="red-team">
+                <h3>紅方控制鍵</h3>
+                <p>選擇位置：\, ], p, o, i（由右至左）</p>
+                <p>角色選擇：</p>
+                <ul>
+                    <li>=：太陽花 (2金幣)</li>
+                    <li>-：土牆 (5金幣)</li>
+                    <li>0：火砲 (5金幣)</li>
+                    <li>9：貓貓 (2金幣)</li>
+                    <li>8：持劍貓貓 (3金幣)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
     <div id="gameInfo">
         <span>藍方金錢: <span id="blueMoneyText">10</span></span>
         <span style="margin-left: 20px">紅方金錢: <span id="redMoneyText">10</span></span>
