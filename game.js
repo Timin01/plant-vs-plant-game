@@ -79,7 +79,21 @@ const KEY_MAPPINGS = {
 
 class Game {
     constructor() {
+        this.characters = [];
+        this.bullets = [];
+        this.selectedPosition = {
+            BLUE: null,
+            RED: null
+        };
+        this.lastMoneyGeneration = Date.now();
+        this.lastUpdate = Date.now();
+        
         this.canvas = document.getElementById('gameCanvas');
+        if (!this.canvas) {
+            console.error('找不到 canvas 元素');
+            return;
+        }
+        
         this.ctx = this.canvas.getContext('2d');
         this.canvas.width = GRID_SIZE * CELL_SIZE;
         this.canvas.height = CELL_SIZE;
@@ -91,15 +105,6 @@ class Game {
         
         this.blueMoney = 10;
         this.redMoney = 10;
-        
-        this.characters = [];
-        this.bullets = [];
-        this.selectedPosition = {
-            BLUE: null,
-            RED: null
-        };
-        this.lastMoneyGeneration = Date.now();
-        this.lastUpdate = Date.now();
         
         this.setupEventListeners();
         this.gameLoop();
@@ -356,7 +361,11 @@ class Game {
     }
 
     handleCombat(currentTime) {
+        if (!this.characters) return;
+        
         this.characters.forEach(attacker => {
+            if (!attacker) return;
+            
             // 檢查是否可以攻擊
             if (currentTime - attacker.lastAttack < 1000) return;
 
