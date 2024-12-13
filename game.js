@@ -79,6 +79,22 @@ const KEY_MAPPINGS = {
 
 class Game {
     constructor() {
+        // 初始化所有屬性
+        this.initializeProperties();
+        
+        // 獲取並設置 Canvas
+        if (!this.initializeCanvas()) {
+            console.error('Canvas 初始化失敗');
+            return;
+        }
+        
+        // 設置事件監聽和開始遊戲
+        this.setupEventListeners();
+        this.startGame();
+    }
+
+    initializeProperties() {
+        // 確保所有屬性都被正確初始化
         this.characters = [];
         this.bullets = [];
         this.selectedPosition = {
@@ -87,27 +103,51 @@ class Game {
         };
         this.lastMoneyGeneration = Date.now();
         this.lastUpdate = Date.now();
-        
-        this.canvas = document.getElementById('gameCanvas');
-        if (!this.canvas) {
-            console.error('找不到 canvas 元素');
-            return;
-        }
-        
-        this.ctx = this.canvas.getContext('2d');
-        this.canvas.width = GRID_SIZE * CELL_SIZE;
-        this.canvas.height = CELL_SIZE;
-        
+        this.blueMoney = 10;
+        this.redMoney = 10;
         this.grid = new Array(GRID_SIZE).fill(null).map(() => ({
             fixed: null,
             movable: null
         }));
+        this.animationFrame = null;
+        this.isGameRunning = false;
+    }
+
+    initializeCanvas() {
+        this.canvas = document.getElementById('gameCanvas');
+        if (!this.canvas) {
+            console.error('找不到 canvas 元素');
+            return false;
+        }
         
-        this.blueMoney = 10;
-        this.redMoney = 10;
+        this.ctx = this.canvas.getContext('2d');
+        if (!this.ctx) {
+            console.error('無法獲取 canvas context');
+            return false;
+        }
         
-        this.setupEventListeners();
+        this.canvas.width = GRID_SIZE * CELL_SIZE;
+        this.canvas.height = CELL_SIZE;
+        return true;
+    }
+
+    startGame() {
+        this.isGameRunning = true;
         this.gameLoop();
+    }
+
+    gameLoop() {
+        if (!this.isGameRunning) return;
+        
+        try {
+            this.update();
+            this.draw();
+            this.animationFrame = requestAnimationFrame(() => this.gameLoop());
+        } catch (error) {
+            console.error('遊戲循環錯誤:', error);
+            this.isGameRunning = false;
+            cancelAnimationFrame(this.animationFrame);
+        }
     }
 
     setupEventListeners() {
@@ -189,12 +229,6 @@ class Game {
     updateMoneyDisplay() {
         document.getElementById('blueMoneyText').textContent = this.blueMoney;
         document.getElementById('redMoneyText').textContent = this.redMoney;
-    }
-
-    gameLoop() {
-        this.update();
-        this.draw();
-        this.animationFrame = requestAnimationFrame(() => this.gameLoop());
     }
 
     update() {
@@ -361,26 +395,33 @@ class Game {
     }
 
     handleCombat(currentTime) {
-        if (!this.characters) return;
+        if (!Array.isArray(this.characters)) {
+            console.error('characters 不是陣列');
+            return;
+        }
         
         this.characters.forEach(attacker => {
             if (!attacker) return;
             
-            // 檢查是否可以攻擊
-            if (currentTime - attacker.lastAttack < 1000) return;
+            try {
+                // 檢查是否可以攻擊
+                if (currentTime - attacker.lastAttack < 1000) return;
 
-            // 獲取攻擊目標
-            const target = this.findTarget(attacker);
-            if (!target) return;
+                // 獲取攻擊目標
+                const target = this.findTarget(attacker);
+                if (!target) return;
 
-            // 執行攻擊
-            if (attacker.type === CHARACTER_TYPES.CANNON) {
-                this.createBullet(attacker, target);
-            } else {
-                this.meleeAttack(attacker, target);
+                // 執行攻擊
+                if (attacker.type === CHARACTER_TYPES.CANNON) {
+                    this.createBullet(attacker, target);
+                } else {
+                    this.meleeAttack(attacker, target);
+                }
+                
+                attacker.lastAttack = currentTime;
+            } catch (error) {
+                console.error('戰鬥處理錯誤:', error);
             }
-            
-            attacker.lastAttack = currentTime;
         });
     }
 
