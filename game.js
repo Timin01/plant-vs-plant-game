@@ -65,7 +65,7 @@ const KEY_MAPPINGS = {
         'e': CHARACTER_TYPES.CANNON,
         'r': CHARACTER_TYPES.CAT,
         't': CHARACTER_TYPES.SWORD_CAT,
-        'a': 0, 's': 1, 'd': 2, 'f': 3, 'g': 4 // 位置選擇
+        'a': 0, 's': 1, 'd': 2, 'f': 3, 'g': 4  // 確保 g 對應到第 4 格
     },
     RED: {
         '=': CHARACTER_TYPES.SUNFLOWER,
@@ -291,8 +291,12 @@ class Game {
     }
 
     canMoveTo(character, position) {
-        // 檢查是否超出邊界
+        // 檢查是否超出邊界或進入非法區域
         if (position < 0 || position >= GRID_SIZE) return false;
+        
+        // 檢查是否進入對方基地
+        if (character.team === 'BLUE' && position >= GRID_SIZE - RED_CELLS) return false;
+        if (character.team === 'RED' && position < BLUE_CELLS) return false;
 
         const targetCell = this.grid[position];
         
@@ -304,6 +308,7 @@ class Game {
     }
 
     checkVictoryCondition(character, nextPosition) {
+        // 修正勝利條件判定
         if (character.team === 'BLUE' && nextPosition >= GRID_SIZE - RED_CELLS) {
             return true;
         }
@@ -488,6 +493,15 @@ class Game {
 
     updateBullets(deltaTime) {
         this.bullets = this.bullets.filter(bullet => {
+            // 檢查目標是否還存在
+            const targetCell = this.grid[bullet.target.position];
+            const targetExists = (targetCell.fixed === bullet.target || 
+                                targetCell.movable === bullet.target);
+            
+            if (!targetExists) {
+                return false; // 如果目標不存在，移除子彈
+            }
+
             const dx = bullet.targetX - bullet.x;
             const distance = bullet.speed * deltaTime;
             
@@ -519,6 +533,9 @@ class Game {
             if (index > -1) {
                 this.characters.splice(index, 1);
             }
+
+            // 移除所有針對該角色的子彈
+            this.bullets = this.bullets.filter(bullet => bullet.target !== character);
         }
     }
 
