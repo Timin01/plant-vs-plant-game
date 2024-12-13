@@ -291,31 +291,33 @@ class Game {
     }
 
     canMoveTo(character, position) {
-        // 檢查是否超出邊界或進入非法區域
+        // 檢查是否超出遊戲邊界
         if (position < 0 || position >= GRID_SIZE) return false;
         
-        // 檢查是否進入對方基地
-        if (character.team === 'BLUE' && position >= GRID_SIZE - RED_CELLS) return false;
-        if (character.team === 'RED' && position < BLUE_CELLS) return false;
+        // 檢查移動範圍（不再使用對方基地作為邊界）
+        if (character.team === 'BLUE') {
+            // 藍方可以移動到除了紅方基地以外的所有格子
+            if (position >= GRID_SIZE - RED_CELLS) return false;
+        } else {
+            // 紅方可以移動到除了藍方基地以外的所有格子
+            if (position < BLUE_CELLS) return false;
+        }
 
+        // 檢查目標格子是否被佔用
         const targetCell = this.grid[position];
-        
-        // 如果是敵方角色，不能穿過
-        if (targetCell.fixed && targetCell.fixed.team !== character.team) return false;
-        if (targetCell.movable && targetCell.movable.team !== character.team) return false;
+        if (targetCell.fixed) return false;
+        if (targetCell.movable) return false;
 
         return true;
     }
 
     checkVictoryCondition(character, nextPosition) {
-        // 修正勝利條件判定
-        if (character.team === 'BLUE' && nextPosition >= GRID_SIZE - RED_CELLS) {
-            return true;
+        // 修改勝利條件判定
+        if (character.team === 'BLUE') {
+            return nextPosition >= GRID_SIZE - RED_CELLS;
+        } else {
+            return nextPosition < BLUE_CELLS;
         }
-        if (character.team === 'RED' && nextPosition < BLUE_CELLS) {
-            return true;
-        }
-        return false;
     }
 
     endGame(winner) {
@@ -337,66 +339,48 @@ class Game {
     }
 
     draw() {
+        // 清空畫布
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.drawGrid();
-        this.drawCharacters();
-        this.drawBullets();
-    }
-
-    drawGrid() {
-        for (let i = 0; i < GRID_SIZE; i++) {
-            this.ctx.beginPath();
-            this.ctx.strokeStyle = 'black';
-            this.ctx.rect(i * CELL_SIZE, 0, CELL_SIZE, CELL_SIZE);
-            this.ctx.stroke();
-            
-            // 標記藍方區域
-            if (i < BLUE_CELLS) {
-                this.ctx.fillStyle = 'rgba(0, 0, 255, 0.1)';
-                this.ctx.fillRect(i * CELL_SIZE, 0, CELL_SIZE, CELL_SIZE);
-            }
-            // 標記紅方區域
-            if (i >= GRID_SIZE - RED_CELLS) {
-                this.ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
-                this.ctx.fillRect(i * CELL_SIZE, 0, CELL_SIZE, CELL_SIZE);
-            }
-        }
-    }
-
-    drawCharacters() {
-        for (let i = 0; i < GRID_SIZE; i++) {
-            const cell = this.grid[i];
-            const x = i * CELL_SIZE;
-            
-            if (cell.fixed) {
-                this.drawCharacter(cell.fixed, x, 0);
-            }
-            if (cell.movable) {
-                this.drawCharacter(cell.movable, x, 0);
-            }
-        }
-    }
-
-    drawCharacter(character, x, y) {
-        this.ctx.font = '30px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
         
-        // 繪製角色符號
-        this.ctx.fillText(
-            character.symbol,
-            x + CELL_SIZE / 2,
-            y + CELL_SIZE / 2
-        );
+        // 繪製格子
+        for (let i = 0; i < GRID_SIZE; i++) {
+            // 設置格子顏色
+            if (i < BLUE_CELLS) {
+                this.ctx.fillStyle = 'rgba(0, 0, 255, 0.3)';  // 藍方基地，完全不透明
+            } else if (i >= GRID_SIZE - RED_CELLS) {
+                this.ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';  // 紅方基地，完全不透明
+            } else {
+                this.ctx.fillStyle = 'white';  // 中立區域
+            }
+            
+            // 繪製格子背景
+            this.ctx.fillRect(i * CELL_SIZE, 0, CELL_SIZE, CELL_SIZE);
+            
+            // 繪製格子邊框
+            this.ctx.strokeStyle = 'black';
+            this.ctx.strokeRect(i * CELL_SIZE, 0, CELL_SIZE, CELL_SIZE);
+        }
 
-        // 繪製血量
-        this.ctx.font = '12px Arial';
-        this.ctx.fillStyle = character.team === 'BLUE' ? 'blue' : 'red';
-        this.ctx.fillText(
-            character.health,
-            x + CELL_SIZE / 2,
-            y + CELL_SIZE - 10
-        );
+        // 繪製角色
+        this.characters.forEach(character => {
+            const x = character.position * CELL_SIZE + CELL_SIZE / 2;
+            const y = CELL_SIZE / 2;
+            
+            this.ctx.font = '30px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillStyle = character.team === 'BLUE' ? 'blue' : 'red';
+            
+            // 繪製角色符號
+            this.ctx.fillText(character.symbol, x, y);
+            
+            // 繪製生命值
+            this.ctx.font = '12px Arial';
+            this.ctx.fillText(character.health.toString(), x, y + 20);
+        });
+
+        // 繪製子彈
+        this.drawBullets();
     }
 
     handleCombat(currentTime) {
