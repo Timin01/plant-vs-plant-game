@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>植物大戰殭屍風格雙人對戰遊戲</title>
+    <style>
+        canvas {
+            border: 2px solid black;
+            display: block;
+            margin: 20px auto;
+        }
+        #gameInfo {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameInfo">
+        <span>藍方金錢: <span id="blueMoneyText">10</span></span>
+        <span style="margin-left: 20px">紅方金錢: <span id="redMoneyText">10</span></span>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <script src="game.js"></script>
+</body>
+</html> 
