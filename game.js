@@ -185,7 +185,7 @@ class Game {
         
         if (money < config.cost) return;
 
-        // 檢查位置是否合法
+        // 檢查位置是否在各自的部署區域內
         if (team === 'BLUE' && position >= BLUE_CELLS) return;
         if (team === 'RED' && position < GRID_SIZE - RED_CELLS) return;
 
@@ -294,30 +294,25 @@ class Game {
         // 檢查是否超出遊戲邊界
         if (position < 0 || position >= GRID_SIZE) return false;
         
-        // 檢查移動範圍（不再使用對方基地作為邊界）
-        if (character.team === 'BLUE') {
-            // 藍方可以移動到除了紅方基地以外的所有格子
-            if (position >= GRID_SIZE - RED_CELLS) return false;
-        } else {
-            // 紅方可以移動到除了藍方基地以外的所有格子
-            if (position < BLUE_CELLS) return false;
-        }
-
         // 檢查目標格子是否被佔用
         const targetCell = this.grid[position];
-        if (targetCell.fixed) return false;
-        if (targetCell.movable) return false;
+        if (targetCell.fixed || targetCell.movable) return false;
 
-        return true;
+        return true; // 允許在整個戰場上移動
     }
 
     checkVictoryCondition(character, nextPosition) {
-        // 修改勝利條件判定
-        if (character.team === 'BLUE') {
-            return nextPosition >= GRID_SIZE - RED_CELLS;
-        } else {
-            return nextPosition < BLUE_CELLS;
+        // 藍方需要到達最右邊（第15格）才算勝利
+        if (character.team === 'BLUE' && nextPosition === GRID_SIZE - 1) {
+            this.endGame('BLUE');
+            return true;
         }
+        // 紅方需要到達最左邊（第0格）才算勝利
+        if (character.team === 'RED' && nextPosition === 0) {
+            this.endGame('RED');
+            return true;
+        }
+        return false;
     }
 
     endGame(winner) {
@@ -431,28 +426,28 @@ class Game {
         if (targetPosition < 0 || targetPosition >= GRID_SIZE) return null;
 
         const targetCell = this.grid[targetPosition];
-        return this.getValidTarget(targetCell, attacker.team);
-    }
+        const target = targetCell.fixed || targetCell.movable;
 
-    findRangedTarget(attacker) {
-        const direction = attacker.team === 'BLUE' ? 1 : -1;
-        for (let i = 1; i <= attacker.range; i++) {
-            const targetPosition = attacker.position + (i * direction);
-            if (targetPosition < 0 || targetPosition >= GRID_SIZE) break;
-
-            const targetCell = this.grid[targetPosition];
-            const target = this.getValidTarget(targetCell, attacker.team);
-            if (target) return target;
+        if (target && target.team !== attacker.team) {
+            return target;
         }
         return null;
     }
 
-    getValidTarget(cell, attackerTeam) {
-        if (cell.fixed && cell.fixed.team !== attackerTeam) {
-            return cell.fixed;
-        }
-        if (cell.movable && cell.movable.team !== attackerTeam) {
-            return cell.movable;
+    findRangedTarget(attacker) {
+        const direction = attacker.team === 'BLUE' ? 1 : -1;
+        let position = attacker.position;
+
+        for (let i = 1; i <= attacker.range; i++) {
+            position += direction;
+            if (position < 0 || position >= GRID_SIZE) break;
+
+            const cell = this.grid[position];
+            const target = cell.fixed || cell.movable;
+
+            if (target && target.team !== attacker.team) {
+                return target;
+            }
         }
         return null;
     }
